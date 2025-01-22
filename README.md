@@ -10,7 +10,7 @@
 - ⚙️ **Auto-launch:** Desktop Mate is added to system startup, so Nagatoro is always there for you.  
 
 ## Installation  
-1. Download the latest version of the program from [Releases](#).  
+1. Download the latest version of the program from [Releases](https://github.com/HalfDayka/Nagatoro-Desktop-Mate-Intaller/releases/tag/release/latest).  
 2. Launch **NDM Installer**.  
 3. Follow the installer instructions: the program will automatically configure Desktop Mate and install the models.  
 4. Enjoy Nagatoro and other characters on your desktop!  
@@ -36,7 +36,7 @@ If you have any questions or wish to report an issue, create an **Issue** in thi
 - ⚙️ **Автозапуск:** Desktop Mate добавляется в автозапуск, чтобы Нагаторо всегда была с вами.  
 
 ## Установка  
-1. Скачайте последнюю версию программы с [релизов](#).  
+1. Скачайте последнюю версию программы с [релизов](https://github.com/HalfDayka/Nagatoro-Desktop-Mate-Intaller/releases/tag/release/latest).  
 2. Запустите **NDM Installer**.  
 3. Следуйте инструкциям установщика: программа автоматически настроит Desktop Mate и установит модели.  
 4. Наслаждайтесь Нагаторо и другими персонажами на вашем рабочем столе!  
