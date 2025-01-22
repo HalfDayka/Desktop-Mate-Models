@@ -11,6 +11,9 @@ import winshell
 import locale
 import pyperclip
 from win32com.client import Dispatch
+import pkg_resources
+from bs4 import BeautifulSoup
+import git
 
 def find_steam_path():
     try:
@@ -244,16 +247,19 @@ class DesktopMateInstallerApp(ctk.CTk):
                 self.step_1_done = True
 
                 if self.language == "ru":
-                    self.update_info("По окончанию установки нажмите на зеленую кнопку еще раз.")
+                    self.update_info("Скачивание .NET 6.0 Desktop Runtime (v6.0.36)...")
                 else:
-                    self.update_info("When the installation is complete, press the green button again.")
+                    self.update_info("Download .NET 6.0 Desktop Runtime (v6.0.36)...")
 
-                installer_path = "Others\\windowsdesktop-runtime-6.0.36-win-x64.exe"
+                installer_path = "windowsdesktop-runtime-6.0.36-win-x64.exe"
 
+                # Если файл существует, запускаем установку
                 if os.path.exists(installer_path):
                     subprocess.run([installer_path], check=True)
                 else:
-                    pass
+                    # Если файл не найден, скачиваем его
+                    self.download_and_install_dotnet()
+
             else:
                 del self.step_1_done
                 if self.current_step == 2:
@@ -262,6 +268,45 @@ class DesktopMateInstallerApp(ctk.CTk):
         except Exception:
             pass
 
+    def download_and_install_dotnet(self):
+        try:
+            # URL страницы, с которой мы будем парсить ссылку
+            url = 'https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-6.0.36-windows-x64-installer'
+
+            # Получаем HTML страницы
+            response = requests.get(url)
+            if response.status_code == 200:
+                # Парсим страницу
+                soup = BeautifulSoup(response.text, 'html.parser')
+
+                # Ищем ссылку для скачивания
+                download_link = soup.find('a', {'id': 'directLink'})['href']
+                if download_link:
+                    print(f"Ссылка для скачивания: {download_link}")
+
+                    # Скачиваем файл
+                    download_response = requests.get(download_link)
+                    installer_path = "windowsdesktop-runtime-6.0.36-win-x64.exe"
+
+                    # Сохраняем файл
+                    with open(installer_path, 'wb') as f:
+                        f.write(download_response.content)
+
+                    print("Файл успешно скачан.")
+
+                    if self.language == "ru":
+                        self.update_info("По окончанию установки нажмите на зеленую кнопку еще раз.")
+                    else:
+                        self.update_info("When the installation is complete, press the green button again.")
+
+                    # Запускаем установку
+                    subprocess.run([installer_path], check=True)
+                else:
+                    print("Не удалось найти ссылку для скачивания.")
+            else:
+                print("Не удалось загрузить страницу.")
+        except Exception as e:
+            print(f"Ошибка при скачивании и установке .NET: {e}")
 
     def handle_install_melonloader(self):
         if self.language == "ru":
@@ -358,104 +403,107 @@ class DesktopMateInstallerApp(ctk.CTk):
                 self.update_advisor()
 
     def handle_install_nagatoro_models(self):
-        if self.language == "ru":
-            self.update_info("Распаковываем Nagatoro_models_pack_v1 в папку Documents\\Models для быстрого доступа...")
-        else:
-            self.update_info("Unpacking Nagatoro_models_pack_v1 to Documents\\Models folder for quick access...")
-
-        archive_path = "Others\\Nagatoro_models_pack_v1.zip"
-
-        target_path = os.path.join(os.path.expanduser("~"), "Documents", "Models")
-
-        if not os.path.exists(target_path):
-            os.makedirs(target_path)
-
         try:
-            with zipfile.ZipFile(archive_path, 'r') as zip_ref:
-                zip_ref.extractall(target_path)
             if self.language == "ru":
-                self.update_info("Модели Нагаторо успешно распакованы.")
+                self.update_info("Скачиваем и распаковываем модели из репозитория GitHub...")
             else:
-                self.update_info("Nagatoro models successfully unpacked.")
+                self.update_info("Downloading and unpacking models from the GitHub repository...")
 
-        except zipfile.BadZipFile:
+            # Указываем путь к папке, куда будем скачивать репозиторий
+            models_dir = os.path.join(os.path.expanduser("~"), "Documents", "Models")
+            vrm_dir = os.path.join(models_dir, "vrm")
+            repo_url = "https://github.com/HalfDayka/NDM-Models.git"
+
+            # Если папка Models не существует, создаем её
+            if not os.path.exists(models_dir):
+                os.makedirs(models_dir)
+
+            # Если папка vrm не существует, создаем её
+            if not os.path.exists(vrm_dir):
+                os.makedirs(vrm_dir)
+
+            # Клонируем репозиторий, если папка с моделями ещё не существует
+            if not os.path.exists(os.path.join(models_dir, "NDM-Models")):
+                self.update_info("Клонируем репозиторий с моделями...")
+                git.Repo.clone_from(repo_url, os.path.join(models_dir, "NDM-Models"))
+                self.update_info("Репозиторий успешно клонирован.")
+
+            # Перемещаем модели в нужную папку
+            for file in os.listdir(os.path.join(models_dir, "NDM-Models", "vrm")):
+                if file.endswith(".vrm"):
+                    shutil.move(
+                        os.path.join(models_dir, "NDM-Models", "vrm", file),
+                        os.path.join(vrm_dir, file)
+                    )
+
+            # Устанавливаем иконки для .vrm файлов
+            self.update_info("Настроим иконки для файлов моделей...")
+
+            icons_dir = pkg_resources.resource_filename(__name__, 'Icons')
+
+            # Если папка с иконками не существует, пропускаем
+            if not os.path.exists(icons_dir):
+                return
+
+            vrm_files = [f for f in os.listdir(vrm_dir) if f.endswith(".vrm")]
+
+            if not vrm_files:
+                if self.language == "ru":
+                    self.update_info("Не найдено .vrm файлов в папке Models.")
+                else:
+                    self.update_info("No .vrm files found in the Models folder.")
+                return
+
+            # Обрабатываем каждый .vrm файл
+            for vrm_file in vrm_files:
+                vrm_path = os.path.join(vrm_dir, vrm_file)
+                icon_name = os.path.splitext(vrm_file)[0] + ".ico"
+                icon_path = os.path.join(icons_dir, icon_name)
+
+                if not os.path.exists(icon_path):
+                    continue
+
+                # Создаем ярлыки для моделей
+                shortcut_name = os.path.splitext(vrm_file)[0] + ".lnk"
+                shortcut_path = os.path.join(models_dir, shortcut_name)
+
+                try:
+                    with winshell.shortcut(shortcut_path) as shortcut:
+                        shortcut.path = vrm_path
+                        shortcut.icon_location = (icon_path, 0)
+
+                except Exception as e:
+                    pass
+
+            # Устанавливаем путь к модели в конфигурационный файл
+            user_profile = os.environ["USERPROFILE"]
+            vrm_path = os.path.join(user_profile, "Documents", "Models", "vrm", "Nagatoro Uniform.vrm")
+
+            config_content = f"""[settings]
+    disable_log_readonly = false
+    vrmPath = '{vrm_path}'"""
+
+            output_dir = os.path.join(self.steam_path, "steamapps", "common", "Desktop Mate", "UserData")
+            os.makedirs(output_dir, exist_ok=True)  # Создаём директории, если их нет
+
+            output_file = os.path.join(output_dir, "MelonPreferences.cfg")
+
+            with open(output_file, "w", encoding="utf-8") as file:
+                file.write(config_content)
+
             if self.language == "ru":
-                self.update_info("Ошибка: Не удалось открыть архив ZIP.")
+                self.update_info("Работа с моделями завершена.\nМодели Нагаторо успешно добавлены.")
             else:
-                self.update_info("Error: Unable to open ZIP archive.")
+                self.update_info("Model handling completed.\nNagatoro models added successfully.")
+
+            if self.current_step == 7:
+                self.update_advisor()
+
         except Exception as e:
             if self.language == "ru":
-                self.update_info(f"Неизвестная ошибка: {e}")
+                self.update_info(f"Произошла ошибка: {e}")
             else:
-                self.update_info(f"Unknown error: {e}")
-
-        if self.language == "ru":
-            self.update_info("Устанавливаем иконки на файлы моделей...")
-        else:
-            self.update_info("Setting up icons for model files...")
-
-        models_dir = os.path.join(os.path.expanduser("~"), "Documents", "Models")
-        vrm_dir = os.path.join(models_dir, "vrm")
-        icons_dir = os.path.join(os.getcwd(), "Icons")
-
-        if not os.path.exists(vrm_dir):
-            os.makedirs(vrm_dir)
-
-        if not os.path.exists(icons_dir):
-            return
-
-        vrm_files = [f for f in os.listdir(models_dir) if f.endswith(".vrm")]
-
-        if not vrm_files:
-            if self.language == "ru":
-                self.update_info("Не найдено .vrm файлов в папке Models.")
-            else:
-                self.update_info("No .vrm files found in the Models folder.")
-            return
-
-        for vrm_file in vrm_files:
-            vrm_path = os.path.join(models_dir, vrm_file)
-            icon_name = os.path.splitext(vrm_file)[0] + ".ico"
-            icon_path = os.path.join(icons_dir, icon_name)
-
-            if not os.path.exists(icon_path):
-                continue
-
-            new_vrm_path = os.path.join(vrm_dir, vrm_file)
-            shutil.move(vrm_path, new_vrm_path)
-
-            shortcut_name = os.path.splitext(vrm_file)[0] + ".lnk"
-            shortcut_path = os.path.join(models_dir, shortcut_name)
-
-            try:
-                with winshell.shortcut(shortcut_path) as shortcut:
-                    shortcut.path = new_vrm_path
-                    shortcut.icon_location = (icon_path, 0)
-
-            except Exception as e:
-                pass
-
-        user_profile = os.environ["USERPROFILE"]
-        vrm_path = os.path.join(user_profile, "Documents", "Models", "vrm", "Nagatoro Uniform.vrm")
-
-        config_content = f"""[settings]
-disable_log_readonly = false
-vrmPath = '{vrm_path}'"""
-
-        output_dir = os.path.join(self.steam_path, "steamapps", "common", "Desktop Mate", "UserData")
-        os.makedirs(output_dir, exist_ok=True)  # Создаём директории, если их нет
-
-        output_file = os.path.join(output_dir, "MelonPreferences.cfg")
-
-        with open(output_file, "w", encoding="utf-8") as file:
-            file.write(config_content)
-
-        if self.language == "ru":
-            self.update_info("Работа с моделями закончена.\nПоставлена Нагаторо в зимней школьной форме, как модель при первом запуске приложения.")
-        else:
-            self.update_info("Model handling completed.\nSupplied by Nagatoro in winter school uniform as a model when the app is first launched.")
-        if self.current_step == 7:
-            self.update_advisor()
+                self.update_info(f"An error occurred: {e}")
 
     def add_to_autorun(self):
         try:
@@ -499,9 +547,9 @@ vrmPath = '{vrm_path}'"""
             app_id = "3301060"
             subprocess.run([os.path.join(self.steam_path, "steam.exe"), f"steam://rungameid/{app_id}"])
             if self.language == "ru":
-                self.update_info("Desktop Mate успешно запущен.\nПервый запуск может занять время.\n\nСмена модели:\n- Нажмите на персонажа левой кнопкой мыши (ЛКМ).\n- Нажмите F4, у вас откроется папка Documents.\n- Откройте папку Models и выберите любую модельку.\n\nЕсли вы пропустили, то для отключения консоли нажмите кнопку 6.")
+                self.update_info("Desktop Mate успешно запущен.\nПервый запуск может занять время.\n\nСмена модели:\n- Нажмите на персонажа левой кнопкой мыши (ЛКМ).\n- Нажмите F4, у вас откроется папка Documents.\n- Откройте папку Models и выберите любую модельку.\n\nЕсли вы пропустили, то для отключения консоли выполните пункт 6.")
             else:
-                self.update_info("Desktop Mate successfully launched.\nThe first launch can take time.\n\nChange model:\n- Left-click on the character.\n- Press F4 to open the Documents folder.\n- Open the Models folder and choose any model.\n\nIf you missed it, press the 6 button to switch off the console.")
+                self.update_info("Desktop Mate successfully launched.\nThe first launch can take time.\n\nChange model:\n- Left-click on the character.\n- Press F4 to open the Documents folder.\n- Open the Models folder and choose any model.\n\nIf you missed it, follow step 6 to disable the console.")
         except Exception as e:
             if self.language == "ru":
                 self.update_info(f"Ошибка при запуске Desktop Mate: {e}")
