@@ -1,10 +1,10 @@
 # NDM Installer  
 
-**NDM Installer** is a program designed for the automatic installation of models from the anime and manga *"Don’t Toy with Me, Miss Nagatoro"* into **Desktop Mate**. The program allows you to install 22 models, including Nagatoro and 5 other characters, in just a few clicks.  
+**NDM Installer** is a program designed for the automatic installation of models from the anime and manga *"Don’t Toy with Me, Miss Nagatoro"* into **Desktop Mate**. The program allows you to install 21 models, including Nagatoro and 5 other characters, in just a few clicks.  
 
 ## Features  
 - 📦 **Full automation:** Install Desktop Mate, necessary software and Nagatoro models from scratch.
-- 🎨 **22 unique models:** Including 6 characters from the anime/manga.  
+- 🎨 **21 unique models:** Including 6 characters from the anime/manga.  
 - 🖌️ **Custom icons:** Convenient shortcuts with model images for easy character switching.  
 - 🚀 **Quick start:** Automatically sets up Nagatoro as the first model upon installation.  
 - ⚙️ **Auto-launch:** Desktop Mate is added to system startup, so Nagatoro is always there for you.  
@@ -26,11 +26,11 @@ If you have any questions or wish to report an issue, create an **Issue** in thi
 
 # NDM Installer  
 
-**NDM Installer** – это программа, созданная для автоматической установки моделей из аниме и манги *"Не издевайся, Нагаторо-сан"* в **Desktop Mate**. Программа позволяет установить 22 модели, включая Нагаторо и 5 других персонажей, всего за несколько кликов.  
+**NDM Installer** – это программа, созданная для автоматической установки моделей из аниме и манги *"Не издевайся, Нагаторо-сан"* в **Desktop Mate**. Программа позволяет установить 21 модели, включая Нагаторо и 5 других персонажей, всего за несколько кликов.  
 
 ## Возможности  
 - 📦 **Полная автоматизация:** установка Desktop Mate, необходимого софта и моделей Нагаторо с нуля.
-- 🎨 **22 уникальные модели:** включая 6 персонажей из аниме/манги.  
+- 🎨 **21 уникальные модели:** включая 6 персонажей из аниме/манги.  
 - 🖌️ **Кастомные иконки:** удобные ярлыки с изображениями моделей для легкой смены персонажей.  
 - 🚀 **Быстрый старт:** при первом запуске автоматически устанавливается модель Нагаторо.  
 - ⚙️ **Автозапуск:** Desktop Mate добавляется в автозапуск, чтобы Нагаторо всегда была с вами.  
