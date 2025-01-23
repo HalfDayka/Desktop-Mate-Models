@@ -13,7 +13,6 @@ import pyperclip
 from win32com.client import Dispatch
 import pkg_resources
 from bs4 import BeautifulSoup
-import git
 
 def find_steam_path():
     try:
@@ -412,7 +411,7 @@ class DesktopMateInstallerApp(ctk.CTk):
             # Указываем путь к папке, куда будем скачивать репозиторий
             models_dir = os.path.join(os.path.expanduser("~"), "Documents", "Models")
             vrm_dir = os.path.join(models_dir, "vrm")
-            repo_url = "https://github.com/HalfDayka/NDM-Models.git"
+            repo_url = "https://github.com/HalfDayka/NDM-Models/archive/refs/heads/main.zip"
 
             # Если папка Models не существует, создаем её
             if not os.path.exists(models_dir):
@@ -422,23 +421,39 @@ class DesktopMateInstallerApp(ctk.CTk):
             if not os.path.exists(vrm_dir):
                 os.makedirs(vrm_dir)
 
-            # Клонируем репозиторий, если папка с моделями ещё не существует
-            if not os.path.exists(os.path.join(models_dir, "NDM-Models")):
-                self.update_info("Клонируем репозиторий с моделями...")
-                git.Repo.clone_from(repo_url, os.path.join(models_dir, "NDM-Models"))
-                self.update_info("Репозиторий успешно клонирован.")
+            # Скачиваем архив репозитория
+            zip_path = os.path.join(models_dir, "NDM-Models.zip")
+            self.update_info("Скачиваем архив репозитория...")
+            response = requests.get(repo_url, stream=True)
+            response.raise_for_status()  # Проверяем успешность запроса
+
+            with open(zip_path, "wb") as zip_file:
+                for chunk in response.iter_content(chunk_size=8192):
+                    zip_file.write(chunk)
+
+            # Распаковываем архив
+            self.update_info("Распаковываем архив репозитория...")
+            with zipfile.ZipFile(zip_path, "r") as zip_ref:
+                zip_ref.extractall(models_dir)
 
             # Перемещаем модели в нужную папку
-            for file in os.listdir(os.path.join(models_dir, "NDM-Models", "vrm")):
+            extracted_dir = os.path.join(models_dir, "NDM-Models-main", "vrm")
+            if not os.path.exists(extracted_dir):
+                raise FileNotFoundError("Не найдена папка с моделями в скачанном архиве.")
+
+            for file in os.listdir(extracted_dir):
                 if file.endswith(".vrm"):
                     shutil.move(
-                        os.path.join(models_dir, "NDM-Models", "vrm", file),
+                        os.path.join(extracted_dir, file),
                         os.path.join(vrm_dir, file)
                     )
 
-            # Устанавливаем иконки для .vrm файлов
-            self.update_info("Настроим иконки для файлов моделей...")
+            # Удаляем архив и временную папку
+            os.remove(zip_path)
+            shutil.rmtree(os.path.join(models_dir, "NDM-Models-main"), ignore_errors=True)
 
+            # Устанавливаем иконки для .vrm файлов
+            self.update_info("Настраиваем иконки для файлов моделей...")
             icons_dir = pkg_resources.resource_filename(__name__, 'Icons')
 
             # Если папка с иконками не существует, пропускаем
@@ -480,8 +495,8 @@ class DesktopMateInstallerApp(ctk.CTk):
             vrm_path = os.path.join(user_profile, "Documents", "Models", "vrm", "Nagatoro Uniform.vrm")
 
             config_content = f"""[settings]
-    disable_log_readonly = false
-    vrmPath = '{vrm_path}'"""
+        disable_log_readonly = false
+        vrmPath = '{vrm_path}'"""
 
             output_dir = os.path.join(self.steam_path, "steamapps", "common", "Desktop Mate", "UserData")
             os.makedirs(output_dir, exist_ok=True)  # Создаём директории, если их нет
