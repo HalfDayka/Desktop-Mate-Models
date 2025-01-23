@@ -403,12 +403,6 @@ class DesktopMateInstallerApp(ctk.CTk):
 
     def handle_install_nagatoro_models(self):
         try:
-            if self.language == "ru":
-                self.update_info("Скачиваем и распаковываем модели из репозитория GitHub...")
-            else:
-                self.update_info("Downloading and unpacking models from the GitHub repository...")
-
-            # Указываем путь к папке, куда будем скачивать репозиторий
             models_dir = os.path.join(os.path.expanduser("~"), "Documents", "Models")
             vrm_dir = os.path.join(models_dir, "vrm")
             repo_url = "https://github.com/HalfDayka/NDM-Models/archive/refs/heads/main.zip"
@@ -429,6 +423,9 @@ class DesktopMateInstallerApp(ctk.CTk):
             response = requests.get(repo_url, stream=True)
             response.raise_for_status()
 
+            if len(response.content) == 0:
+                raise ValueError("Не удалось загрузить файл. Пожалуйста, проверьте подключение к интернету.")
+
             with open(zip_path, "wb") as zip_file:
                 for chunk in response.iter_content(chunk_size=8192):
                     zip_file.write(chunk)
@@ -438,8 +435,14 @@ class DesktopMateInstallerApp(ctk.CTk):
             else:
                 self.update_info("Unpacking the models...")
 
-            with zipfile.ZipFile(zip_path, "r") as zip_ref:
-                zip_ref.extractall(models_dir)
+            try:
+                with zipfile.ZipFile(zip_path, "r") as zip_ref:
+                    zip_ref.testzip()
+                    zip_ref.extractall(models_dir)
+            except zipfile.BadZipFile:
+                raise ValueError("Ошибка при распаковке архива. Файл поврежден или неполный.")
+            except Exception as e:
+                raise ValueError(f"Не удалось распаковать архив: {e}")
 
             extracted_dir = os.path.join(models_dir, "NDM-Models-main", "vrm")
             if not os.path.exists(extracted_dir):
