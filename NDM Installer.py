@@ -49,6 +49,7 @@ import webbrowser
 class DesktopMateInstallerApp(ctk.CTk):
     def __init__(self):
         super().__init__()
+        ctk.set_appearance_mode("dark")
         self.title("Nagatoro Desktop Mate Installer")
         self.geometry("800x400")
         self.resizable(False, False)
